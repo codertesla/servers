@@ -1,0 +1,41 @@
+name: Sync Check
+on:
+  schedule:
+    - cron: '0 0 * * 1' # 每周一 UTC 时间 0 点运行
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  check-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 获取完整提交历史
+
+      - name: Check upstream updates
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data } = await github.rest.repos.compareCommits({
+              owner: 'modelcontextprotocol',
+              repo: 'servers',
+              base: context.sha,
+              head: 'main'
+            })
+            
+            if (data.ahead_by > 0) {
+              console.log(`发现 ${data.ahead_by} 个新提交需要同步`)
+              
+              // 创建 Issue
+              const issueTitle = `[Sync Needed] 发现上游 ${data.ahead_by} 个新提交需要同步`;
+              const issueBody = `检测到上游仓库有新的提交需要同步：\n\n${data.commits.map(c => '- ' + c.commit.message).join('\n')}`;
+              
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['sync']
+              });
+            } 
