@@ -1,3 +1,8 @@
+<!-- 顶部添加英文切换提示 -->
+<div align="center">
+  <a href="./README.md">View in English</a>
+</div>
+
 # Model Context Protocol 服务器合集
 
 [English Version](README.md) | [中文版本](README.zh-CN.md)
